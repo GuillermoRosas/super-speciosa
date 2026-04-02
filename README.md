@@ -123,3 +123,11 @@ Validation
 
 You do not need to build authentication.
 Assume Auth::user() exists.
+
+## Part 4 — Engineering Thinking
+Answer briefly:
+
+If this CRM grows to 50 sales reps and 500k leads, what would you improve next?
+Where could AI automation help this CRM?
+
+R: If the CRM grows to 50 sales reps and 500k leads, I would focus on improving the scalability and performance of the application. This could involve optimizing database queries, implementing caching strategies, and possibly introducing a microservices architecture to handle different components of the CRM separately. Additionally, I would consider implementing a more robust search functionality to allow sales reps to quickly find leads and notes.
