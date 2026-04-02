@@ -131,3 +131,7 @@ If this CRM grows to 50 sales reps and 500k leads, what would you improve next?
 Where could AI automation help this CRM?
 
 R: If the CRM grows to 50 sales reps and 500k leads, I would focus on improving the scalability and performance of the application. This could involve optimizing database queries, implementing caching strategies, and possibly introducing a microservices architecture to handle different components of the CRM separately. Additionally, I would consider implementing a more robust search functionality to allow sales reps to quickly find leads and notes.
+
+Add unit tests, swagger documentation, and more robust error handling to ensure the application is maintainable and reliable, use custom resources in the responses.
+
+implement clean architecture to separate concerns in domains
