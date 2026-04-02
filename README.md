@@ -7,52 +7,119 @@
 <a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
 </p>
 
-## About Laravel
+## Super Speciosa Technical Assessment
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Part 1 — Debug & Review
+Below is a simplified controller currently used in production.
+````php
+class LeadController extends Controller
+{
+public function index()
+{
+$leads = DB::table('leads')->get();
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+       foreach ($leads as $lead) {
+           $lead->user = DB::table('users')
+               ->where('id', $lead->assigned_user_id)
+               ->first();
+       }
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+       return response()->json($leads);
+}
+}
+````
+Questions
+Answer the following:
+What performance problem exists in this code?
 
-## Learning Laravel
+R: The performance problem in the provided code is that it retrieves all leads from the database and then performs a separate query to fetch the assigned user for each lead. This results in an N+1 query problem, where N is the number of leads. As the number of leads grows, the number of database queries increases linearly, leading to significant performance degradation. For example, if there are 1,000,000 leads, the code will execute 1,000,001 database queries, which is highly inefficient. To address this issue, we can use eager loading to fetch all the necessary data in a single query, thereby reducing the number of database interactions and improving overall performance. In Laravel, this can be achieved by using the `with` method when retrieving the leads, as shown in the revised code snippet below:
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+in other hand, use models and relationships. Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+How would you fix it in Laravel?
 
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
-
-## Agentic Development
-
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
-
-```bash
-composer require laravel/boost --dev
-
-php artisan boost:install
+R: To fix the performance issue in Laravel, you can use the `with` or `load` method to eager load the `assignedUser` relationship when retrieving the leads. This will reduce the number of database queries from N+1 to 2, where N is the number of leads.
+Using models and relationships. First, ensure that you have defined the relationship in your Lead model:
+```php
+$leads = Lead::all()->load('assignedUser');
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+If the table grows to 1M leads, what database changes would you consider?
 
-## Contributing
+R: If the table grows to 1M leads, you would consider implementing the following database changes:
+- Indexing: Ensure that the `assigned_user_id` column in the `leads` table is indexed. This will speed up the join operation when fetching the assigned user.
+- Partitioning: If the `leads` table grows very large, consider partitioning the table based on a relevant column (e.g., `created_at` or `id`). This can help improve query performance by reducing the amount of data that needs to be scanned.
+- Query Optimization: Optimize the queries to minimize the amount of data retrieved from the database. For example, if you don't need all columns from the `users` table, specify only the necessary columns in the query.
+- Caching: Implement caching mechanisms to reduce the number of database queries. For example, cache the result of the `index` method and invalidate the cache when the data changes.
+- Hardware Upgrades: Consider upgrading the hardware, such as adding more RAM or using faster storage, to handle the increased load on the database server.
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+## Part 2 — Data Modeling (15 minutes)
+We want to add a feature:
+Sales reps should be able to add notes to a lead.
+Example:
+Lead: Green Earth Market
 
-## Code of Conduct
+Notes:
+- Called buyer, interested in organic line
+- Wants wholesale pricing sheet
+  Task
+  Design the database schema for this feature.
+  Provide:
+  Table structure, Indexes, Laravel migration
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
 
-## Security Vulnerabilities
+Example format:
+lead_notes
+````text
+id
+lead_id
+user_id
+note
+created_at
+````
+Also answer:
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+How would you query the latest note for each lead efficiently?
 
-## License
+R: To query the latest note for each lead efficiently, you can use a subquery or a join with a window function to get the most recent note for each lead. Here is an example using a subquery:
+Or using the laravel tools:
+```php
+ public function latestNote()
+    {
+        return $this->hasOne(LeadNote::class)->latestOfMany();
+    }
+```
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+## Part 3 — Feature Implementation
+Spin up a laravel application for this and include it in your submission.
+Implement an API endpoint:
+POST /api/leads/{lead}/notes
+Example request:
+{
+"note": "Buyer wants to review wholesale pricing."
+}
+Requirements:
+Save the note
+
+
+Associate with logged-in user
+
+
+Return the created note
+
+
+Expected pieces:
+Model
+
+
+Migration
+
+
+Controller method
+
+
+Validation
+
+
+You do not need to build authentication.
+Assume Auth::user() exists.
